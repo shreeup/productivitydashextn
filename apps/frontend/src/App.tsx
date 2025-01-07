@@ -20,6 +20,7 @@ const App: React.FC = () => {
         flexDirection: 'column',
         alignItems: 'center',
         padding: 2,
+        minWidth: '500px',
       }}
     >
       {/* Stack is a flex container with spacing and alignment */}

@@ -98,7 +98,7 @@ const PomodoroTimer: React.FC = () => {
 
   return (
     <div style={styles.container}>
-      <h2>Pomodoro Timer</h2>
+      <h3>Pomodoro Timer</h3>
       <div style={styles.timerDisplay}>
         <p style={styles.sessionType}>
           {timerState.isWorkSession ? 'Work Session' : 'Break Session'}
