@@ -53,7 +53,6 @@ const App: React.FC = () => {
 
   const handleformLogin = async () => {
     try {
-      debugger;
       let userCredential = await signInWithEmailAndPassword(
         auth,
         useremail,
