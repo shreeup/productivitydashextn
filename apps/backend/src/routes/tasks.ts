@@ -1,18 +1,20 @@
-import { Router } from 'express';
+import express from 'express';
 import pool from '../config/db';
 
-const router = Router();
+import authenticateFirebase from '../middlewares/authenticateFirebase';
 
+const router = express.Router();
+router.use(authenticateFirebase);
 // Get all tasks
-router.get('/', async (req, res) => {
+router.get('/', async (req: express.Request, res) => {
+  console.log('userid ', req.user?.uid);
   const { search } = req.query; // Get the search query parameter
-  let query =
-    'SELECT id,title,description,category,due_date as duedate,priority FROM tasks';
+  let query = `SELECT id,title,description,category,due_date as duedate,priority FROM tasks WHERE userid= '${req.user?.uid}'`;
   let values: any = [];
 
   if (search) {
     // If search query is provided, add a WHERE clause to filter tasks by title or description
-    query += ' WHERE title ILIKE $1 OR description ILIKE $1';
+    query += ' AND (title ILIKE $1 OR description ILIKE $1)';
     values = [`%${search}%`]; // Use ILIKE for case-insensitive matching
   }
 
@@ -31,8 +33,8 @@ router.post('/', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'INSERT INTO tasks (title, description, category, due_date, priority) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [title, description, category, dueDate, priority]
+      'INSERT INTO tasks (title, description, category, due_date, priority,userid) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [title, description, category, dueDate, priority, req.user?.uid]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {

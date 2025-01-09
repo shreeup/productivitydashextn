@@ -18,6 +18,7 @@ type TaskState = {
   tasks: Task[];
   loading: boolean;
   error: string | null;
+  token: string | null;
 };
 
 type TaskAction =
@@ -26,12 +27,14 @@ type TaskAction =
   | { type: 'DELETE_TASK'; payload: string }
   | { type: 'UPDATE_TASK'; payload: Task }
   | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_ERROR'; payload: string | null };
+  | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'SET_TOKEN'; payload: string | null };
 
 const initialState: TaskState = {
   tasks: [],
   loading: false,
   error: null,
+  token: null,
 };
 
 const TaskContext = createContext<{
@@ -71,6 +74,8 @@ const taskReducer = (state: TaskState, action: TaskAction): TaskState => {
       return { ...state, loading: action.payload };
     case 'SET_ERROR':
       return { ...state, error: action.payload };
+    case 'SET_TOKEN': // Handle setting or removing the token
+      return { ...state, token: action.payload };
     default:
       return state;
   }
@@ -89,7 +94,13 @@ const transformBackendTask = (backendTask: any): Task => {
 
 export const TaskProvider: React.FC<TaskProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(taskReducer, initialState);
-
+  useEffect(() => {
+    if (state.token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${state.token}`;
+    } else {
+      delete axios.defaults.headers.common['Authorization'];
+    }
+  }, [state.token]);
   // Fetch tasks from the API on component mount
   useEffect(() => {
     const fetchTasks = async () => {
@@ -111,8 +122,10 @@ export const TaskProvider: React.FC<TaskProviderProps> = ({ children }) => {
         dispatch({ type: 'SET_LOADING', payload: false });
       }
     };
-    fetchTasks();
-  }, []); // Empty dependency array ensures this runs once when component mounts
+    if (state.token) {
+      fetchTasks();
+    }
+  }, [state.token]); // Empty dependency array ensures this runs once when component mounts
 
   return (
     <TaskContext.Provider value={{ state, dispatch }}>

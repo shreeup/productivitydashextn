@@ -8,7 +8,7 @@ export default defineConfig({
     viteStaticCopy({
       targets: [
         {
-          src: 'src/chrome/manifest.json',
+          src: ['src/chrome/manifest.json'],
           dest: './', // Copies to the root of the dist folder
         },
       ],

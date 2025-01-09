@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Website Blocker Extension",
+  "name": "Productivity Dashboard Extension",
   "version": "1.0",
   "background": {
     "service_worker": "background.js"
@@ -9,7 +9,9 @@
     "storage",
     "notifications",
     "declarativeNetRequest",
-    "declarativeNetRequestFeedback"
+    "declarativeNetRequestFeedback",
+    "identity",
+    "offscreen"
   ],
   "host_permissions": ["http://*/*", "https://*/*"],
   "action": {
@@ -19,5 +21,8 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
   }
 }
