@@ -77,36 +77,43 @@ const WebsiteBlocker: React.FC = () => {
   return (
     <div>
       <h3>Website Blocker</h3>
-      <input
-        type="text"
-        placeholder="URL (e.g. https://www.example.com)"
-        value={website}
-        onChange={e => setWebsite(e.target.value)}
-        style={{
-          padding: '10px',
-          marginBottom: '10px',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-        }}
-      />
-      <input
-        type="number"
-        placeholder="Block for (minutes)"
-        value={timer}
-        onChange={e => setTimer(Number(e.target.value))}
-        style={{
-          padding: '10px',
-          marginBottom: '10px',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-        }}
-      />
+      <label>
+        URL:
+        <input
+          type="text"
+          placeholder="https://www.example.com"
+          value={website}
+          onChange={e => setWebsite(e.target.value)}
+          style={{
+            padding: '10px',
+            marginBottom: '10px',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+          }}
+        />
+      </label>
+      <br />
+      <label>
+        Block for (min):
+        <input
+          type="number"
+          placeholder="Block for (min)"
+          value={timer}
+          onChange={e => setTimer(Number(e.target.value))}
+          style={{
+            padding: '10px',
+            marginBottom: '10px',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+          }}
+        />
+      </label>
       <br />
       <button
         onClick={addWebsite}
         style={{
           padding: '10px',
-          backgroundColor: '#28a745',
+          backgroundColor: 'rgb(0, 123, 255)',
           color: 'white',
           border: 'none',
           borderRadius: '4px',
@@ -128,7 +135,6 @@ const WebsiteBlocker: React.FC = () => {
             }}
           >
             {web.url} {'blocked till '} {new Date(web.blockUntil).toString()}{' '}
-            {web.blockUntil} {' in epoch'}
             <button
               onClick={() => removeWebsite(web.url)}
               style={{

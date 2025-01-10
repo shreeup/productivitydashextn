@@ -19,6 +19,7 @@ import {
   createUserWithEmailAndPassword,
 } from 'firebase/auth/web-extension';
 import { FormContainer, Input } from './StyledComponents';
+import axios from 'axios';
 
 const App: React.FC = () => {
   // return (
@@ -33,6 +34,15 @@ const App: React.FC = () => {
   const [userpassword, setuserpassword] = useState('');
 
   useEffect(() => {
+    chrome.runtime.sendMessage({ type: 'popupOpened' }, response => {
+      if (response.token) {
+        dispatch({ type: 'SET_TOKEN', payload: response.token });
+        axios.defaults.headers.common['Authorization'] =
+          `Bearer ${response.token}`;
+      } else {
+        console.log('No token found');
+      }
+    });
     const unsubscribe = onAuthStateChanged(auth, user => {
       setIsAuthenticated(!!user);
     });

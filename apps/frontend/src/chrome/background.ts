@@ -38,7 +38,18 @@ function showNotification(title: string, message: string) {
     }
   );
 }
-
+chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
+  if (message.type === 'popupOpened') {
+    chrome.storage.local.get(['firebaseToken'], result => {
+      if (result.firebaseToken) {
+        sendResponse({ token: result.firebaseToken });
+      } else {
+        sendResponse({ token: null });
+      }
+    });
+    return true; // Keep the message channel open for async response
+  }
+});
 // Website Blocker Logic
 chrome.runtime.onInstalled.addListener(() => {
   showNotification('Website Blocker', 'Extension successfully installed!');
