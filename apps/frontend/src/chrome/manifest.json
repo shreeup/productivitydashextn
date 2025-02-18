@@ -9,9 +9,7 @@
     "storage",
     "notifications",
     "declarativeNetRequest",
-    "declarativeNetRequestFeedback",
-    "identity",
-    "offscreen"
+    "declarativeNetRequestFeedback"
   ],
   "host_permissions": ["http://*/*", "https://*/*"],
   "action": {
