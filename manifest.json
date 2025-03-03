@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Focus Assistant",
+  "version": "1.0",
+  "description": "Pomodoro timer & website blocker",
+  "permissions": [
+    "storage",
+    "identity",
+    "alarms",
+    "notifications",
+    "declarativeNetRequest"
+  ],
+  "oauth2": {
+    "client_id": "113543912380-5rlo3jr2852ajh8fron68r6nqco22igr.apps.googleusercontent.com",
+    "scopes": ["openid", "email", "profile"]
+  },
+  "host_permissions": ["https://your-auth-provider.com/*"],
+  "background": {
+    "service_worker": "dist/background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon16.png",
+      "128": "icons/icon16.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon16.png",
+    "128": "icons/icon16.png"
+  }
+}
