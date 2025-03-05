@@ -1,16 +1,14 @@
 // src/components/LoginButton.tsx
 import React from 'react';
 import { useAuth } from '../context/AuthContext.tsx';
+import { GOOGLE_CLIENT_ID } from '../config.ts';
 
 const LoginButton: React.FC = () => {
   const { login } = useAuth();
-  debugger;
+
   const handleLogin = () => {
-    debugger;
-    const clientId =
-      '113543912380-5rlo3jr2852ajh8fron68r6nqco22igr.apps.googleusercontent.com';
+    const clientId = GOOGLE_CLIENT_ID;
     const redirectUri = chrome.identity.getRedirectURL();
-    console.log();
     const scope = 'openid profile email';
 
     const authUrl = `https://accounts.google.com/o/oauth2/auth?client_id=${clientId}&response_type=token&redirect_uri=${redirectUri}&scope=${scope}`;

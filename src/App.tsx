@@ -4,67 +4,79 @@ import LoginButton from './components/LoginButton.tsx';
 import LogoutButton from './components/LogoutButton.tsx';
 import UserDetails from './components/UserDetails.tsx';
 import { AuthProvider, useAuth } from './context/AuthContext.tsx';
-const ONE_DAY = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+import { TaskProvider } from './context/TaskContext.tsx';
+import TaskList from './components/TaskManager/TaskList.tsx';
+import { FormContainer } from './components/StyledComponent.tsx';
+import { Box, Typography } from '@mui/material';
+import Container from '@mui/material/Container';
+const ONE_DAY = 1 * 60 * 60 * 1000; // 1 hr in milliseconds
 const App: React.FC = () => {
   const { user, login, logout, setUser } = useAuth();
 
   useEffect(() => {
-    chrome.storage.local.get('accessToken', result => {
-      if (result.accessToken) {
-        // If we have a saved token, log in automatically
-        const accessToken = result.accessToken;
-        login(accessToken);
-      }
-    });
+    async function prepare() {
+      await checkAutoLogout(); // Check logout on app load
+      await chrome.storage.local.get('accessToken', async result => {
+        if (result.accessToken) {
+          // If we have a saved token, log in automatically
+          const accessToken = result.accessToken;
+          await checkAutoLogout();
+          login(accessToken);
+        }
+      });
+    }
+    prepare();
   }, []);
 
-  const checkAutoLogout = () => {
-    chrome.storage.local.get(['loginTimestamp', 'userProfile'], result => {
-      const loginTime = result.loginTimestamp;
-      const currentTime = Date.now();
-
-      if (!loginTime || currentTime - loginTime > ONE_DAY) {
-        handleLogout();
-      } else {
-        setUser(result.userProfile);
-      }
-    });
-  };
-
-  // Function to handle logout
-  const handleLogout = () => {
-    chrome.storage.local.remove(
-      ['loginTimestamp', 'authToken', 'userProfile'],
-      () => {
-        setUser(null);
-        console.log('User automatically logged out due to inactivity.');
+  const checkAutoLogout = async () => {
+    await chrome.storage.local.get(
+      ['loginTimestamp', 'userProfile'],
+      async result => {
+        const loginTime = result.loginTimestamp;
+        const currentTime = Date.now();
+        if (!loginTime || currentTime - loginTime > ONE_DAY) {
+          await logout();
+        } else {
+          setUser(result.userProfile);
+        }
       }
     );
   };
 
-  useEffect(() => {
-    checkAutoLogout(); // Check logout on app load
-  }, []);
-
   return (
-    <div>
-      <h1>Focus Assistant</h1>
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        flexDirection: 'column',
+        minWidth: '500px',
+        minHeight: '500px',
+      }}
+    >
+      <Typography>Welcome to Focus Assistant</Typography>
       {user ? (
-        <div>
+        <Container>
           <p>Welcome, {user.name}!</p>
           <UserDetails />
-          <LogoutButton onLogout={handleLogout} />
-        </div>
+          <Container>
+            <h3>Task Manager</h3>
+            <TaskList />
+          </Container>
+        </Container>
       ) : (
-        <LoginButton onLogin={checkAutoLogout} />
+        <LoginButton />
       )}
-    </div>
+    </Box>
   );
 };
 
 const WrappedApp: React.FC = () => (
   <AuthProvider>
-    <App />
+    <TaskProvider>
+      <App />
+    </TaskProvider>
   </AuthProvider>
 );
 

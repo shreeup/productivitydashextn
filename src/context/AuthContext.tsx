@@ -1,4 +1,10 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, {
+  createContext,
+  useState,
+  useContext,
+  ReactNode,
+  useEffect,
+} from 'react';
 
 interface User {
   name: string;
@@ -8,9 +14,11 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  setUser: React.Dispatch<React.SetStateAction<User | null>>; // Exposed setUser
+  accessToken: string | null;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
   login: (accessToken: string) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
+  getAccessToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,17 +27,41 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
+  // Load stored credentials on mount
+  useEffect(() => {
+    chrome.storage.local.get(['accessToken', 'userProfile'], result => {
+      if (result.accessToken && result.userProfile) {
+        setAccessToken(result.accessToken);
+        setUser(result.userProfile);
+      }
+    });
+  }, []);
+
+  // Function to get the stored token
+  const getAccessToken = async (): Promise<string | null> => {
+    return new Promise(resolve => {
+      if (accessToken) {
+        resolve(accessToken);
+      } else {
+        chrome.storage.local.get('accessToken', result => {
+          resolve(result.accessToken || null);
+        });
+      }
+    });
+  };
+
+  // Login function
   const login = (accessToken: string) => {
     fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+      headers: { Authorization: `Bearer ${accessToken}` },
     })
       .then(response => response.json())
-      .then(data => {
+      .then(async data => {
         setUser(data);
-        chrome.storage.local.set({
+        setAccessToken(accessToken);
+        await chrome.storage.local.set({
           accessToken,
           userProfile: data,
           loginTimestamp: Date.now(),
@@ -40,17 +72,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       });
   };
 
-  const logout = () => {
+  // Logout function
+  const logout = async () => {
     setUser(null);
-    chrome.storage.local.remove([
+    setAccessToken(null);
+    await chrome.storage.local.remove([
       'accessToken',
       'userProfile',
       'loginTimestamp',
     ]);
+    console.log('removed from local');
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, accessToken, setUser, login, logout, getAccessToken }}
+    >
       {children}
     </AuthContext.Provider>
   );
