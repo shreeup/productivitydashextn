@@ -82,15 +82,12 @@ export const TaskProvider: React.FC<TaskProviderProps> = ({ children }) => {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
 
-      debugger;
-      console.log('token recieved from authtcontext' + token);
       dispatch({ type: 'SET_LOADING', payload: true });
 
       try {
         const response = await axios.get(`${API_URL}/tasks`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        debugger;
         dispatch({ type: 'SET_TASKS', payload: response.data });
       } catch (error) {
         console.error('Error fetching tasks:', error);

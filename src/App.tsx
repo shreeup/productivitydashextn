@@ -61,12 +61,15 @@ const App: React.FC = () => {
         <Container>
           <p>Welcome, {user.name}!</p>
           <UserDetails />
-          <h3>Task Manager</h3>
+          <h2>Task Manager</h2>
           <TaskList />
-          <h3>Pomodoro Timer</h3>
+          <hr />
+          <h2>Pomodoro Timer</h2>
           {/* Pomodoro Timer */}
+
           <PomodoroTimer />
-          <h3>Website Blocker</h3>
+          <hr />
+          <h2>Website Blocker</h2>
           {/* Website Blocker */}
           <WebsiteBlocker />
         </Container>

@@ -8,7 +8,9 @@
     "identity",
     "alarms",
     "notifications",
-    "declarativeNetRequest"
+    "declarativeNetRequest",
+    "webNavigation",
+    "tabs"
   ],
   "background": {
     "service_worker": "background.js"
@@ -19,7 +21,9 @@
   },
   "host_permissions": [
     "https://www.googleapis.com/*",
-    "https://productivitydash.onrender.com/*"
+    "https://productivitydash.onrender.com/*",
+    "http://*/*",
+    "https://*/*"
   ],
   "action": {
     "default_popup": "index.html"

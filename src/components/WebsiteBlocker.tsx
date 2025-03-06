@@ -1,17 +1,15 @@
-// frontend/src/components/WebsiteBlocker.tsx
-
 import React, { useEffect, useState } from 'react';
 
 interface BlockedWebsite {
-  id: number; // This should be an integer, but let's ensure it is treated as one
+  id: number;
   url: string;
-  blockUntil: number;
+  blockUntil: number; // timestamp when the website will be unblocked
 }
 
 const WebsiteBlocker: React.FC = () => {
   const [website, setWebsite] = useState<string>('');
   const [blockedWebsites, setBlockedWebsites] = useState<BlockedWebsite[]>([]);
-  const [timer, setTimer] = useState(0);
+  const [timer, setTimer] = useState<number>(1); // Time in minutes
 
   // Load blocked websites from chrome storage when the component mounts
   useEffect(() => {
@@ -19,19 +17,6 @@ const WebsiteBlocker: React.FC = () => {
       setBlockedWebsites(result.blockedWebsites || []);
     });
   }, []);
-
-  // Add website to block list
-  //   const addWebsite = () => {
-  //     if (website) {
-  //       chrome.storage.sync.get('blockedWebsites', result => {
-  //         const newBlockedWebsites = [...(result.blockedWebsites || []), website];
-  //         chrome.storage.sync.set({ blockedWebsites: newBlockedWebsites }, () => {
-  //           setBlockedWebsites(newBlockedWebsites); // Update state to re-render list
-  //           setWebsite(''); // Reset input field
-  //         });
-  //       });
-  //     }
-  //   };
 
   const addWebsite = () => {
     if (!website || !/^https?:\/\/[\w.-]+$/.test(website)) {
@@ -48,7 +33,9 @@ const WebsiteBlocker: React.FC = () => {
 
       const newBlockedWebsite = {
         url: website,
-        blockUntil: timer ? new Date().getTime() + timer * 60 * 1000 : null,
+        blockUntil: timer
+          ? new Date().getTime() + timer * 60 * 1000
+          : Date.now(), // block until the time is reached
       };
       const updatedBlockedWebsites = [...blocked, newBlockedWebsite];
       chrome.storage.sync.set(
@@ -62,7 +49,6 @@ const WebsiteBlocker: React.FC = () => {
     });
   };
 
-  // Remove website from block list
   const removeWebsite = (websiteToRemove: string) => {
     chrome.storage.sync.get('blockedWebsites', result => {
       const updatedWebsites = result.blockedWebsites.filter(
@@ -83,12 +69,6 @@ const WebsiteBlocker: React.FC = () => {
           placeholder="https://www.example.com"
           value={website}
           onChange={e => setWebsite(e.target.value)}
-          style={{
-            padding: '10px',
-            marginBottom: '10px',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-          }}
         />
       </label>
       <br />
@@ -99,27 +79,10 @@ const WebsiteBlocker: React.FC = () => {
           placeholder="Block for (min)"
           value={timer}
           onChange={e => setTimer(Number(e.target.value))}
-          style={{
-            padding: '10px',
-            marginBottom: '10px',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-          }}
         />
       </label>
       <br />
-      <button
-        onClick={addWebsite}
-        style={{
-          padding: '10px',
-          backgroundColor: 'rgb(0, 123, 255)',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-        }}
-        title="Block"
-      >
+      <button onClick={addWebsite} title="Block">
         Block
       </button>
       <h5 style={{ marginTop: '20px' }}>Blocked Websites</h5>
@@ -134,18 +97,7 @@ const WebsiteBlocker: React.FC = () => {
             }}
           >
             {web.url} {'blocked till '} {new Date(web.blockUntil).toString()}{' '}
-            <button
-              onClick={() => removeWebsite(web.url)}
-              style={{
-                backgroundColor: '#dc3545',
-                color: 'white',
-                padding: '5px',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-              title="Unblock"
-            >
+            <button onClick={() => removeWebsite(web.url)} title="Unblock">
               &#9986;
             </button>
           </li>

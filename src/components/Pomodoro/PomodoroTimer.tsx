@@ -77,7 +77,7 @@ const PomodoroTimer = () => {
 
   return (
     <div className="pomodoro-timer">
-      <h2>{isWorkSession ? 'Work Session' : 'Break Session'}</h2>
+      <h3>{isWorkSession ? 'Work Session' : 'Break Session'}</h3>
       <h1>{formatTime(timeLeft)}</h1>
       <button onClick={startTimer} disabled={isRunning}>
         Start
@@ -90,38 +90,44 @@ const PomodoroTimer = () => {
 
       {isSettingsOpen && (
         <div className="settings-modal">
-          <div className="modal-content">
-            <h3>Settings</h3>
-            <label>
-              Work Duration (minutes):
+          {' '}
+          <h3>Settings</h3>
+          <div
+            className="modal-content"
+            style={{ display: 'grid', gridTemplateColumns: 'auto auto ' }}
+          >
+            <div>
+              Work Duration (min):
               <input
                 type="number"
                 value={tempWorkDuration}
                 onChange={e => setTempWorkDuration(Number(e.target.value))}
                 min="1"
               />
-            </label>
-            <br />
-            <label>
-              Break Duration (minutes):
+            </div>
+            <div>
+              Break Duration (min):
               <input
                 type="number"
                 value={tempBreakDuration}
                 onChange={e => setTempBreakDuration(Number(e.target.value))}
                 min="1"
               />
-            </label>
-            <br />
-            <button
-              onClick={() => {
-                setWorkDuration(tempWorkDuration * 60);
-                setBreakDuration(tempBreakDuration * 60);
-                setIsSettingsOpen(false);
-              }}
-            >
-              Save
-            </button>
-            <button onClick={() => setIsSettingsOpen(false)}>Cancel</button>
+            </div>
+            <div>&nbsp;</div> <div>&nbsp;</div>
+            <div>
+              <button
+                onClick={() => {
+                  setWorkDuration(tempWorkDuration * 60);
+                  setBreakDuration(tempBreakDuration * 60);
+                  setIsSettingsOpen(false);
+                }}
+              >
+                Save
+              </button>
+
+              <button onClick={() => setIsSettingsOpen(false)}>Cancel</button>
+            </div>
           </div>
         </div>
       )}

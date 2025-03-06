@@ -74,8 +74,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         });
       })
       .catch(async error => {
-        debugger;
-        console.log('catch' + error);
         console.error('Error fetching user info:', error);
         await logout();
       });

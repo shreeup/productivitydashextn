@@ -1,9 +1,3 @@
-interface BlockedWebsite {
-  id: number;
-  url: string;
-  blockUntil: number;
-}
-
 // Timer State interface
 interface TimerState {
   isRunning: boolean;
@@ -12,7 +6,11 @@ interface TimerState {
   workDuration: number;
   breakDuration: number;
 }
-
+interface BlockedWebsite {
+  id: number;
+  url: string;
+  blockUntil: number; // timestamp when the website will be unblocked
+}
 // Helper function to show notifications
 function showNotification(title: string, message: string): void {
   chrome.notifications.create(
@@ -32,27 +30,40 @@ function showNotification(title: string, message: string): void {
   );
 }
 
-chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
-  if (message.type === 'popupOpened') {
-    chrome.storage.local.get(['firebaseToken'], result => {
-      if (result.firebaseToken) {
-        sendResponse({ token: result.firebaseToken });
-      } else {
-        sendResponse({ token: null });
-      }
-    });
-    return true; // Keep the message channel open for async response
-  }
-});
-
-// Website Blocker Logic
+// Background Script (background.ts)
 chrome.runtime.onInstalled.addListener(() => {
   showNotification('Website Blocker', 'Extension successfully installed!');
+
+  updateTimerState(); // Ensure state is set on extension installation
+  // Initialize or update blocked websites during installation
   chrome.storage.sync.get('blockedWebsites', result => {
     const blockedWebsites: BlockedWebsite[] = result.blockedWebsites || [];
-    updateBlockingRules(blockedWebsites);
+    updateBlockedWebsites(blockedWebsites); // This will also update blocking rules
   });
+  // Periodically clean up expired websites
+  setInterval(cleanupExpiredWebsites, 60 * 1000); // Check every minute
 });
+
+function updateBlockedWebsites(blockedWebsites: BlockedWebsite[]): void {
+  const currentTime = Date.now();
+
+  // Remove expired blocked websites and update storage
+  const updatedBlockedWebsites = blockedWebsites.filter(
+    website => !website.blockUntil || website.blockUntil > currentTime
+  );
+
+  chrome.storage.sync.set({ blockedWebsites: updatedBlockedWebsites }, () => {
+    updateBlockingRules(updatedBlockedWebsites); // Update blocking rules accordingly
+  });
+}
+
+function cleanupExpiredWebsites(): void {
+  // Check and cleanup expired websites every minute
+  chrome.storage.sync.get('blockedWebsites', result => {
+    const blockedWebsites: BlockedWebsite[] = result.blockedWebsites || [];
+    updateBlockedWebsites(blockedWebsites);
+  });
+}
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'sync' && changes.blockedWebsites) {
@@ -96,9 +107,13 @@ function updateBlockingRules(blockedWebsites: BlockedWebsite[]): void {
   });
 }
 
-// Notify when a website is blocked
 function notifyBlockedAccess(url: string): void {
-  showNotification('Website Blocked', `Access to ${url} is blocked.`);
+  chrome.notifications.create({
+    type: 'basic',
+    iconUrl: 'icons/icon16.png',
+    title: 'Website Blocked',
+    message: `Access to ${url} is blocked.`,
+  });
 }
 
 // Pomodoro Timer Logic
@@ -176,9 +191,4 @@ chrome.runtime.onMessage.addListener(message => {
   } else if (message.type === 'RESET_TIMER') {
     resetTimer();
   }
-});
-
-// Ensure timer state is updated when the extension is installed
-chrome.runtime.onInstalled.addListener(() => {
-  updateTimerState(); // Ensure state is set on extension installation
 });
