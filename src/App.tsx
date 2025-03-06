@@ -9,6 +9,8 @@ import TaskList from './components/TaskManager/TaskList.tsx';
 import { FormContainer } from './components/StyledComponent.tsx';
 import { Box, Typography } from '@mui/material';
 import Container from '@mui/material/Container';
+import PomodoroTimer from './components/Pomodoro/PomodoroTimer.tsx';
+import WebsiteBlocker from './components/WebsiteBlocker.tsx';
 const ONE_DAY = 1 * 60 * 60 * 1000; // 1 hr in milliseconds
 const App: React.FC = () => {
   const { user, login, logout, setUser } = useAuth();
@@ -44,12 +46,11 @@ const App: React.FC = () => {
   };
 
   return (
-    <Box
+    <Container
       sx={{
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        height: '100vh',
         flexDirection: 'column',
         minWidth: '500px',
         minHeight: '500px',
@@ -60,15 +61,19 @@ const App: React.FC = () => {
         <Container>
           <p>Welcome, {user.name}!</p>
           <UserDetails />
-          <Container>
-            <h3>Task Manager</h3>
-            <TaskList />
-          </Container>
+          <h3>Task Manager</h3>
+          <TaskList />
+          <h3>Pomodoro Timer</h3>
+          {/* Pomodoro Timer */}
+          <PomodoroTimer />
+          <h3>Website Blocker</h3>
+          {/* Website Blocker */}
+          <WebsiteBlocker />
         </Container>
       ) : (
         <LoginButton />
       )}
-    </Box>
+    </Container>
   );
 };
 

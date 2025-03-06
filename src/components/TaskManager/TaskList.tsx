@@ -56,7 +56,7 @@ const TaskList: React.FC = () => {
   };
 
   return (
-    <TaskListContainer>
+    <div>
       {/* Search input */}
       <input
         type="text"
@@ -102,7 +102,7 @@ const TaskList: React.FC = () => {
         </button>
         <br />
         {filteredTasks.map(task => (
-          <TaskItem key={task.id}>
+          <li key={task.id}>
             <strong>{task.title}</strong> - {task.description}
             <button onClick={() => deleteTask(task.id)} title="Delete">
               &#9986;
@@ -110,10 +110,10 @@ const TaskList: React.FC = () => {
             <button onClick={() => handleEdit(task)} title="Edit">
               &#9998;
             </button>
-          </TaskItem>
+          </li>
         ))}
       </ul>
-    </TaskListContainer>
+    </div>
   );
 };
 

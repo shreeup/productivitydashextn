@@ -10,6 +10,9 @@
     "notifications",
     "declarativeNetRequest"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "oauth2": {
     "client_id": "113543912380-5rlo3jr2852ajh8fron68r6nqco22igr.apps.googleusercontent.com",
     "scopes": ["openid", "email", "profile"]

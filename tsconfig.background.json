@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "outDir": "build",
+    "module": "ESNext",
+    "target": "ES6",
+    "lib": ["ES6", "DOM"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/background.ts"],
+  "exclude": ["node_modules"]
+}

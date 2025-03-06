@@ -57,8 +57,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
-      .then(response => response.json())
+      .then(response => {
+        return response.json();
+      })
       .then(async data => {
+        if (data && data.error) {
+          logout();
+          return;
+        }
         setUser(data);
         setAccessToken(accessToken);
         await chrome.storage.local.set({
@@ -67,8 +73,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           loginTimestamp: Date.now(),
         });
       })
-      .catch(error => {
+      .catch(async error => {
+        debugger;
+        console.log('catch' + error);
         console.error('Error fetching user info:', error);
+        await logout();
       });
   };
 
