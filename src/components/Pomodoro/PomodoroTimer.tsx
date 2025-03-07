@@ -1,94 +1,120 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+interface TimerState {
+  isRunning: boolean;
+  isWorkSession: boolean;
+  timeLeft: number; // in seconds
+  workDuration: number; // in seconds
+  breakDuration: number; // in seconds
+}
+
 const PomodoroTimer = () => {
-  const [isRunning, setIsRunning] = useState(false);
-  const [isWorkSession, setIsWorkSession] = useState(true);
-  const [timeLeft, setTimeLeft] = useState(25 * 60); // Default 25 minutes
-  const [workDuration, setWorkDuration] = useState(25 * 60);
-  const [breakDuration, setBreakDuration] = useState(5 * 60);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [tempWorkDuration, setTempWorkDuration] = useState(workDuration / 60);
-  const [tempBreakDuration, setTempBreakDuration] = useState(
-    breakDuration / 60
-  );
+  const [timerState, setTimerState] = useState<TimerState>({
+    isRunning: false,
+    isWorkSession: true,
+    timeLeft: 25 * 60,
+    workDuration: 25 * 60,
+    breakDuration: 5 * 60,
+  });
 
-  // Create refs for the latest values of workDuration and breakDuration
-  const workDurationRef = useRef(workDuration);
-  const breakDurationRef = useRef(breakDuration);
+  const [isSettingsVisible, setIsSettingsVisible] = useState(false);
+  const [workDuration, setWorkDuration] = useState(25); // in minutes
+  const [breakDuration, setBreakDuration] = useState(5); // in minutes
 
-  // Update the refs whenever workDuration or breakDuration change
-  useEffect(() => {
-    workDurationRef.current = workDuration;
-    breakDurationRef.current = breakDuration;
-  }, [workDuration, breakDuration]);
-
-  // Get the latest state of the timer when the component mounts
-  useEffect(() => {
-    chrome.storage.local.get(['timerState'], result => {
-      if (result.timerState) {
-        setIsRunning(result.timerState.isRunning);
-        setIsWorkSession(result.timerState.isWorkSession);
-        setTimeLeft(result.timerState.timeLeft);
-      }
-    });
-
-    chrome.storage.onChanged.addListener(changes => {
-      if (changes.timerState) {
-        setIsRunning(changes.timerState.newValue.isRunning);
-        setIsWorkSession(changes.timerState.newValue.isWorkSession);
-        setTimeLeft(changes.timerState.newValue.timeLeft);
-      }
-    });
-
-    return () => {
-      chrome.storage.onChanged.removeListener(() => {});
-    };
-  }, []);
-
-  const startTimer = () => {
-    setIsRunning(true);
-    chrome.runtime.sendMessage({
-      type: 'START_TIMER',
-      workDuration: workDurationRef.current,
-      breakDuration: breakDurationRef.current,
-    });
-  };
-
-  const stopTimer = () => {
-    setIsRunning(false);
-    chrome.runtime.sendMessage({ type: 'STOP_TIMER' });
-  };
-
-  const resetTimer = () => {
-    setIsRunning(false);
-    setTimeLeft(isWorkSession ? workDuration : breakDuration);
-    chrome.runtime.sendMessage({
-      type: 'RESET_TIMER',
-      workDuration,
-      breakDuration,
-    });
-  };
-
+  // Format timeLeft into mm:ss format
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+    return `${minutes.toString().padStart(2, '0')}:${secs
+      .toString()
+      .padStart(2, '0')}`;
   };
+
+  // Fetch the timer state from chrome.storage.local
+  const fetchTimerState = () => {
+    chrome.storage.local.get('timerState', result => {
+      if (result.timerState) {
+        setTimerState(result.timerState);
+      }
+    });
+  };
+
+  // Start the Pomodoro Timer
+  const startTimer = () => {
+    chrome.runtime.sendMessage(
+      {
+        type: 'START_TIMER',
+      },
+      response => {
+        if (response.success) {
+          fetchTimerState();
+        }
+      }
+    );
+  };
+
+  // Stop the Pomodoro Timer
+  const stopTimer = () => {
+    chrome.runtime.sendMessage({ type: 'STOP_TIMER' }, response => {
+      if (response.success) {
+        fetchTimerState();
+      }
+    });
+  };
+
+  // Reset the Pomodoro Timer
+  const resetTimer = () => {
+    chrome.runtime.sendMessage({ type: 'RESET_TIMER' }, response => {
+      if (response.success) {
+        fetchTimerState();
+      }
+    });
+  };
+
+  // Update Pomodoro Timer settings
+  const updateSettings = () => {
+    const updatedWorkDuration = workDuration * 60; // Convert minutes to seconds
+    const updatedBreakDuration = breakDuration * 60; // Convert minutes to seconds
+
+    chrome.runtime.sendMessage(
+      {
+        type: 'UPDATE_SETTINGS',
+        workDuration: updatedWorkDuration,
+        breakDuration: updatedBreakDuration,
+      },
+      response => {
+        if (response.success) {
+          fetchTimerState();
+          setIsSettingsVisible(false);
+        }
+      }
+    );
+  };
+
+  // Sync the timer state when the component mounts
+  useEffect(() => {
+    fetchTimerState();
+
+    // Listen for changes in the timer state in chrome.storage
+    const interval = setInterval(fetchTimerState, 1000);
+
+    return () => clearInterval(interval); // Cleanup on unmount
+  }, []);
 
   return (
     <div className="pomodoro-timer">
-      <h3>{isWorkSession ? 'Work Session' : 'Break Session'}</h3>
-      <h1>{formatTime(timeLeft)}</h1>
-      <button onClick={startTimer} disabled={isRunning}>
+      <h3> {timerState.isWorkSession ? 'Work Session' : 'Break Session'}</h3>
+      <h1>{formatTime(timerState.timeLeft)}</h1>
+      <button onClick={startTimer} disabled={timerState.isRunning}>
         Start
       </button>
-      <button onClick={stopTimer} disabled={!isRunning}>
+      <button onClick={stopTimer} disabled={!timerState.isRunning}>
         Stop
       </button>
       <button onClick={resetTimer}>Reset</button>
-      <button onClick={() => setIsSettingsOpen(true)}>Settings</button>
+      <button onClick={() => setIsSettingsVisible(true)}>Settings</button>
 
-      {isSettingsOpen && (
+      {isSettingsVisible && (
         <div className="settings-modal">
           {' '}
           <h3>Settings</h3>
@@ -100,8 +126,8 @@ const PomodoroTimer = () => {
               Work Duration (min):
               <input
                 type="number"
-                value={tempWorkDuration}
-                onChange={e => setTempWorkDuration(Number(e.target.value))}
+                value={workDuration}
+                onChange={e => setWorkDuration(Number(e.target.value))}
                 min="1"
               />
             </div>
@@ -109,8 +135,8 @@ const PomodoroTimer = () => {
               Break Duration (min):
               <input
                 type="number"
-                value={tempBreakDuration}
-                onChange={e => setTempBreakDuration(Number(e.target.value))}
+                value={breakDuration}
+                onChange={e => setBreakDuration(Number(e.target.value))}
                 min="1"
               />
             </div>
@@ -118,15 +144,16 @@ const PomodoroTimer = () => {
             <div>
               <button
                 onClick={() => {
-                  setWorkDuration(tempWorkDuration * 60);
-                  setBreakDuration(tempBreakDuration * 60);
-                  setIsSettingsOpen(false);
+                  updateSettings();
+                  setIsSettingsVisible(false);
                 }}
               >
                 Save
               </button>
 
-              <button onClick={() => setIsSettingsOpen(false)}>Cancel</button>
+              <button onClick={() => setIsSettingsVisible(false)}>
+                Cancel
+              </button>
             </div>
           </div>
         </div>

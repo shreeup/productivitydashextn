@@ -1,7 +1,6 @@
 import styled from 'styled-components';
 
 export const Input = styled.input`
-  width: 100%;
   padding: 12px;
   font-size: 16px;
   border: 1px solid #ccc;
@@ -41,7 +40,6 @@ export const Form = styled.form`
 `;
 
 export const TextArea = styled.textarea`
-  width: 100%;
   padding: 12px;
   font-size: 16px;
   border: 1px solid #ccc;

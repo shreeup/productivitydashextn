@@ -80,6 +80,7 @@ const TaskForm: React.FC<{ taskToEdit?: Task; onClose: () => void }> = ({
       setCategory('');
       setDueDate('');
       setPriority('medium');
+      onClose();
     } catch (error) {
       console.error('Error saving task:', error);
       setError('Failed to save task. Please try again.');

@@ -42,25 +42,42 @@ const TaskContext = createContext<{
   dispatch: () => null,
 });
 
+const transformBackendTask = (backendTask: any): Task => {
+  return {
+    id: backendTask.id, // You can implement a function to generate a unique ID
+    title: backendTask.title,
+    description: backendTask.description,
+    category: backendTask.category,
+    duedate: backendTask.due_date,
+    priority: backendTask.priority as 'low' | 'medium' | 'high',
+  };
+};
+
 // Task reducer to handle the actions
 const taskReducer = (state: TaskState, action: TaskAction): TaskState => {
   switch (action.type) {
     case 'SET_TASKS':
       return { ...state, tasks: action.payload, loading: false, error: null };
     case 'ADD_TASK':
-      return { ...state, tasks: [...state.tasks, action.payload] };
+      return {
+        ...state,
+        tasks: [...state.tasks, transformBackendTask(action.payload)],
+      };
     case 'DELETE_TASK':
       return {
         ...state,
         tasks: state.tasks.filter(task => task.id !== action.payload),
       };
-    case 'UPDATE_TASK':
+    case 'UPDATE_TASK': {
       return {
         ...state,
         tasks: state.tasks.map(task =>
-          task.id === action.payload.id ? action.payload : task
+          task.id === action.payload.id
+            ? transformBackendTask(action.payload)
+            : task
         ),
       };
+    }
     case 'SET_LOADING':
       return { ...state, loading: action.payload };
     case 'SET_ERROR':
@@ -97,7 +114,6 @@ export const TaskProvider: React.FC<TaskProviderProps> = ({ children }) => {
       }
     };
     if (accessToken) fetchTasks();
-    console.log(accessToken + ' accto');
   }, [accessToken]); // Re-run when token changes
 
   return (

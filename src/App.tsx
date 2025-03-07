@@ -52,8 +52,8 @@ const App: React.FC = () => {
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'column',
-        minWidth: '500px',
-        minHeight: '500px',
+        minWidth: '640px',
+        minHeight: '400px',
       }}
     >
       <Typography>Welcome to Focus Assistant</Typography>

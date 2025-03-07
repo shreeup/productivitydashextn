@@ -88,7 +88,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       'userProfile',
       'loginTimestamp',
     ]);
-    console.log('removed from local');
   };
 
   return (

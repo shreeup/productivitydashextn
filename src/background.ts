@@ -1,11 +1,3 @@
-// Timer State interface
-interface TimerState {
-  isRunning: boolean;
-  isWorkSession: boolean;
-  timeLeft: number;
-  workDuration: number;
-  breakDuration: number;
-}
 interface BlockedWebsite {
   id: number;
   url: string;
@@ -32,7 +24,7 @@ function showNotification(title: string, message: string): void {
 
 // Background Script (background.ts)
 chrome.runtime.onInstalled.addListener(() => {
-  showNotification('Website Blocker', 'Extension successfully installed!');
+  showNotification('Focus Assistant', 'Extension successfully installed!');
 
   updateTimerState(); // Ensure state is set on extension installation
   // Initialize or update blocked websites during installation
@@ -46,12 +38,10 @@ chrome.runtime.onInstalled.addListener(() => {
 
 function updateBlockedWebsites(blockedWebsites: BlockedWebsite[]): void {
   const currentTime = Date.now();
-
   // Remove expired blocked websites and update storage
   const updatedBlockedWebsites = blockedWebsites.filter(
     website => !website.blockUntil || website.blockUntil > currentTime
   );
-
   chrome.storage.sync.set({ blockedWebsites: updatedBlockedWebsites }, () => {
     updateBlockingRules(updatedBlockedWebsites); // Update blocking rules accordingly
   });
@@ -78,13 +68,18 @@ function updateBlockingRules(blockedWebsites: BlockedWebsite[]): void {
   const validRules = blockedWebsites
     .filter(website => !website.blockUntil || website.blockUntil > currentTime)
     .map((website, index) => {
-      const normalizedUrl = website.url.replace(/^(https?:\/\/)/, '');
+      // Extract domain name to apply wildcard blocking
+      let domain = website.url.replace(/^https?:\/\//, '').split('/')[0]; // Extract base domain
+      if (!domain.startsWith('*')) {
+        domain = `*.${domain}`; // Ensure all subdomains are blocked
+      }
+
       return {
         id: index + 1,
         action: { type: 'block' } as chrome.declarativeNetRequest.RuleAction,
         condition: {
-          urlFilter: `*://${normalizedUrl}/*`,
-          resourceTypes: ['main_frame', 'sub_frame'],
+          urlFilter: `*://${domain}/*`, // Block all subdomains with HTTP & HTTPS
+          resourceTypes: ['main_frame'],
         },
       };
     });
@@ -100,7 +95,7 @@ function updateBlockingRules(blockedWebsites: BlockedWebsite[]): void {
         if (chrome.runtime.lastError) {
           console.error('Error updating rules:', chrome.runtime.lastError);
         } else {
-          console.log('Dynamic rules updated successfully.');
+          console.log('Blocking rules updated successfully.');
         }
       }
     );
@@ -117,7 +112,16 @@ function notifyBlockedAccess(url: string): void {
 }
 
 // Pomodoro Timer Logic
-let timerState: TimerState = {
+
+interface PomodoroTimerState {
+  isRunning: boolean;
+  isWorkSession: boolean;
+  timeLeft: number; // in seconds
+  workDuration: number; // in seconds
+  breakDuration: number; // in seconds
+}
+
+let timerState: PomodoroTimerState = {
   isRunning: false,
   isWorkSession: true,
   timeLeft: 25 * 60, // Default work duration in seconds
@@ -129,32 +133,10 @@ const updateTimerState = (): void => {
   chrome.storage.local.set({ timerState });
 };
 
-const startTimer = (): void => {
-  timerState.isRunning = true;
-  updateTimerState();
-  runTimer();
-};
-
-const stopTimer = (): void => {
-  timerState.isRunning = false;
-  updateTimerState();
-};
-
-const resetTimer = (): void => {
-  timerState.timeLeft = timerState.isWorkSession
-    ? timerState.workDuration
-    : timerState.breakDuration;
-  timerState.isRunning = false;
-  updateTimerState();
-};
-
-const runTimer = (): void => {
+function startPomodoroTimer() {
   if (!timerState.isRunning) return;
 
-  // Decrease time by 1 second
   timerState.timeLeft -= 1;
-
-  // If the timer runs out, switch to the next session
   if (timerState.timeLeft <= 0) {
     timerState.isWorkSession = !timerState.isWorkSession;
     timerState.timeLeft = timerState.isWorkSession
@@ -162,33 +144,41 @@ const runTimer = (): void => {
       : timerState.breakDuration;
 
     const sessionType = timerState.isWorkSession ? 'Work' : 'Break';
-    chrome.notifications.create({
-      type: 'basic',
-      iconUrl: 'icons/icon16.png',
-      title: `${sessionType} Session`,
-      message: `Time for a ${sessionType} session!`,
-    });
+    showNotification('Pomodoro Timer', `Time for a ${sessionType} session!`);
   }
 
-  updateTimerState();
+  chrome.storage.local.set({ timerState });
 
+  // Schedule the next tick
   if (timerState.isRunning) {
-    setTimeout(runTimer, 1000); // Run every second
+    setTimeout(startPomodoroTimer, 1000); // 1-second interval
   }
-};
+}
 
-chrome.runtime.onMessage.addListener(message => {
+chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
   if (message.type === 'START_TIMER') {
-    // Update the durations from the message
+    timerState.isRunning = true;
+    chrome.storage.local.set({ timerState });
+    startPomodoroTimer();
+    sendResponse({ success: true });
+  } else if (message.type === 'STOP_TIMER') {
+    timerState.isRunning = false;
+    chrome.storage.local.set({ timerState });
+    sendResponse({ success: true });
+  } else if (message.type === 'RESET_TIMER') {
+    timerState.isRunning = false;
+    timerState.timeLeft = timerState.isWorkSession
+      ? timerState.workDuration
+      : timerState.breakDuration;
+    chrome.storage.local.set({ timerState });
+    sendResponse({ success: true });
+  } else if (message.type === 'UPDATE_SETTINGS') {
     timerState.workDuration = message.workDuration;
     timerState.breakDuration = message.breakDuration;
     timerState.timeLeft = timerState.isWorkSession
       ? timerState.workDuration
       : timerState.breakDuration;
-    startTimer();
-  } else if (message.type === 'STOP_TIMER') {
-    stopTimer();
-  } else if (message.type === 'RESET_TIMER') {
-    resetTimer();
+    chrome.storage.local.set({ timerState });
+    sendResponse({ success: true });
   }
 });
