@@ -8,9 +8,7 @@
     "identity",
     "alarms",
     "notifications",
-    "declarativeNetRequest",
-    "webNavigation",
-    "tabs"
+    "declarativeNetRequest"
   ],
   "background": {
     "service_worker": "background.js"
